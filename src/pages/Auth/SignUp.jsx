@@ -26,56 +26,54 @@ export default function SignUp({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
-    if (!name || !userId || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields.');
-      return;
-    }
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters.');
-      return;
-    }
+  if (!name || !userId || !email || !password) {
+    Alert.alert('Error', 'Please fill in all fields.');
+    return;
+  }
+  if (password.length < 6) {
+    Alert.alert('Error', 'Password must be at least 6 characters.');
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    // 1. Create auth user
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, user_id: userId }, // stored in auth.users raw_user_meta_data
-      },
-    });
+  // 1. Create auth user
+  const { data, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name, user_id: userId },
+    },
+  });
 
-    if (signUpError) {
-      setLoading(false);
-      Alert.alert('Sign Up Failed', signUpError.message);
-      return;
-    }
-
-    // 2. Insert profile row into a 'profiles' table (optional but recommended)
-    // Make sure you have a 'profiles' table in Supabase:
-    //   id uuid references auth.users(id), name text, user_id text, email text
-    if (data?.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        name,
-        user_id: userId,
-        email,
-      });
-
-      if (profileError) {
-        console.warn('Profile insert failed:', profileError.message);
-        // Non-fatal: auth account was created successfully
-      }
-    }
-
+  if (signUpError) {
     setLoading(false);
-    Alert.alert(
-      'Account Created!',
-      'Please check your email to confirm your account, then sign in.',
-      [{ text: 'OK', onPress: () => navigation.navigate('SignIn') }]
-    );
-  };
+    Alert.alert('Sign Up Failed', signUpError.message);
+    return;
+  }
+
+  // 2. Insert into Users table
+  // 2. Insert into profiles table
+if (data?.user) {
+  const { error: profileError } = await supabase.from('profiles').insert({
+    id: data.user.id,
+    name: name,
+    user_id: userId,
+    email: email,
+  });
+
+  if (profileError) {
+    console.warn('Insert failed:', profileError.message);
+  }
+}
+
+  setLoading(false);
+  Alert.alert(
+    'Account Created!',
+    'Please check your email to confirm your account, then sign in.',
+    [{ text: 'OK', onPress: () => navigation.navigate('SignIn') }]
+  );
+};
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
